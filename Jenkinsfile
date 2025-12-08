@@ -14,10 +14,11 @@ pipeline {
         stage('Terraform Apply') {
             steps {
                 script {
-                    dir('ansible-task/main.tf') {
+                    dir('ansible-task') {
                     sh 'terraform init'
                     sh 'terraform validate'
                     sh 'terraform plan'
+                    sh 'terraform apply'
                     }
                 }
             }
