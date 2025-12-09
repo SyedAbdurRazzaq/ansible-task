@@ -6,7 +6,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 sh 'echo cloning repo'
-                git branch: 'main', url: 'https://github.com/saivarun0509/ansible-task.git'
+                git branch: 'main', url: 'https://github.com/pmohd6065-ux/ansible-task.git'
             }
         }
 
@@ -32,7 +32,7 @@ pipeline {
 
                     // --- AMAZON LINUX (frontend) ---
                     ansiblePlaybook(
-                        credentialsId: 'ec2-key',
+                        credentialsId: 'my-key',
                         disableHostKeyChecking: true,
                         installation: 'ansible',
                         inventory: 'inventory.yaml',
@@ -45,7 +45,7 @@ pipeline {
                     // --- UBUNTU (backend, only if needed) ---
                     ansiblePlaybook(
                         become: true,
-                        credentialsId: 'ec2-key',
+                        credentialsId: 'my-key',
                         disableHostKeyChecking: true,
                         installation: 'ansible',
                         inventory: 'inventory.yaml',
