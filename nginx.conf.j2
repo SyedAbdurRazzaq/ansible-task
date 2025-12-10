@@ -13,7 +13,7 @@ http {
     keepalive_timeout 65;
 
     upstream backend_netdata {
-        server {{ hostvars['backend']['ansible_host'] }}:19999;
+        server {{ hostvars[groups['backend'][0]].ansible_host }}:19999;
     }
 
     server {

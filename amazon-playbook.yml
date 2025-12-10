@@ -30,4 +30,4 @@
     - name: restart nginx
       service:
         name: nginx
-        state: resta
+        state: restarted
