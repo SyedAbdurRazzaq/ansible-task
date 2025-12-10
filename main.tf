@@ -11,7 +11,7 @@ variable "key_name" {
 variable "subnet_id" {
   type    = string
   # Replace with your subnet id or pass via -var
-  default = "subnet-0491ca8b1885b7e5e"
+  default = "subnet-070cb376bf30f081d"
 }
 
 variable "jenkins_allowed_cidr" {
