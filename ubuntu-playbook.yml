@@ -19,15 +19,37 @@
         mode: '0755'
 
     - name: Run Netdata installer (non-interactive)
-      command: bash /tmp/netdata-install.sh --non-interactive
-      args:
-        chdir: /tmp
-      creates: /usr/sbin/netdata
+      shell: bash /tmp/netdata-install.sh --non-interactive
 
-    - name: Generate default netdata.conf
-      command: netdata config
-      args:
-        chdir: /etc/netdata
-      creates: /etc/netdata/netdata.conf
+    - name: Check if netdata.conf exists
+      stat:
+        path: /etc/netdata/netdata.conf
+      register: netdata_conf
+
+    - name: Create netdata.conf if missing
+      blockinfile:
+        path: /etc/netdata/netdata.conf
+        create: yes
+        block: |
+          [web]
+            bind socket to IP = 0.0.0.0
+      when: not netdata_conf.stat.exists
+
+    - name: Ensure bind socket IP is updated
+      lineinfile:
+        path: /etc/netdata/netdata.conf
+        regexp: '^ *bind socket to IP ='
+        line: '  bind socket to IP = 0.0.0.0'
+      notify: restart netdata
 
     - name: Ensure Netdata service is running
+      service:
+        name: netdata
+        state: started
+        enabled: yes
+
+  handlers:
+    - name: restart netdata
+      service:
+        name: netdata
+        state: restarted
