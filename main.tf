@@ -2,7 +2,6 @@ provider "aws" {
   region = "us-east-1"
 }
 
-# ---------- variables ----------
 variable "key_name" {
   type    = string
   default = "jenkins"
@@ -18,9 +17,7 @@ variable "jenkins_allowed_cidr" {
   default = "0.0.0.0/0"
 }
 
-# ---------------------------
-# Fetch Subnet Details
-# ---------------------------
+# Fetch VPC ID using subnet
 data "aws_subnet" "selected" {
   id = var.subnet_id
 }
@@ -84,4 +81,62 @@ resource "aws_instance" "backend" {
     Name = "u21.local"
   }
 
-  user_data = <<-EOF
+  user_data = <<EOF
+#!/bin/bash
+hostnamectl set-hostname u21.local
+EOF
+}
+
+# ---------------------------
+# Frontend (Amazon Linux)
+# ---------------------------
+resource "aws_instance" "frontend" {
+  ami                         = "ami-068c0051b15cdb816"
+  instance_type               = "t3.micro"
+  key_name                    = var.key_name
+  subnet_id                   = var.subnet_id
+  vpc_security_group_ids      = [aws_security_group.app_sg.id]
+  associate_public_ip_address = true
+
+  tags = {
+    Name = "c8.local"
+  }
+
+  user_data = <<EOF
+#!/bin/bash
+hostnamectl set-hostname c8.local
+echo "${aws_instance.backend.private_ip} backend.local" >> /etc/hosts
+EOF
+
+  depends_on = [aws_instance.backend]
+}
+
+# ---------------------------
+# Inventory File
+# ---------------------------
+resource "local_file" "inventory" {
+  filename = "${path.module}/inventory.yaml"
+
+  content = <<EOF
+[frontend]
+${aws_instance.frontend.public_ip} ansible_user=ec2-user ansible_host=${aws_instance.frontend.public_ip}
+
+[backend]
+${aws_instance.backend.public_ip} ansible_user=ubuntu ansible_host=${aws_instance.backend.public_ip}
+EOF
+}
+
+# ---------------------------
+# Outputs
+# ---------------------------
+output "frontend_public_ip" {
+  value = aws_instance.frontend.public_ip
+}
+
+output "backend_public_ip" {
+  value = aws_instance.backend.public_ip
+}
+
+output "inventory_path" {
+  value = local_file.inventory.filename
+}
