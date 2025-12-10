@@ -20,7 +20,13 @@
     - name: Run Netdata installer (non-interactive)
       command: "bash /tmp/netdata-install.sh --non-interactive"
       args:
-        creates: /etc/netdata/netdata.conf
+        creates: /usr/lib/netdata/netdata.conf  # internal pkg check
+
+    - name: Generate default netdata.conf
+      command: netdata config
+      args:
+        chdir: /etc/netdata
+      creates: /etc/netdata/netdata.conf
 
     - name: Ensure Netdata service is running
       service:
@@ -30,4 +36,13 @@
 
     - name: Update netdata.conf to listen on 0.0.0.0
       lineinfile:
-        path: /etc/netdata/netda
+        path: /etc/netdata/netdata.conf
+        regexp: '^#?bind socket to IP ='
+        line: '    bind socket to IP = 0.0.0.0'
+      notify: restart netdata
+
+  handlers:
+    - name: restart netdata
+      service:
+        name: netdata
+        state: restarted
